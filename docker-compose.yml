@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+
+  clj-postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    volumes:
+      - clj-data:/var/lib/postgresql/data
+
+volumes:
+  clj-data:
