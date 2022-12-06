@@ -1,4 +1,4 @@
-(ns clj-app.util.migration
+(ns util.migration
   (:require
    [config.core :refer [env]]
    [migratus.core :as migratus]
