@@ -10,6 +10,8 @@
    [next.jdbc.result-set :as rs]
    [next.jdbc.sql :as sql]))
 
+;; ci testing
+
 (def db-url (:jdbc-url env))
 
 (def builder-options {:return-keys true :builder-fn rs/as-unqualified-maps})
