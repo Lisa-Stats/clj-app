@@ -2,8 +2,7 @@ name: Push to DOKS and update Kustomize
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
   build-and-push:
@@ -14,21 +13,24 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v2
 
-    - name: Install doctl
-      uses: digitalocean/action-doctl@v2
-      with:
-        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Build container image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: docker build -t registry.digitalocean.com/nginx-container/clojure:$IMAGE_TAG .
 
-    - name: Log in to DigitalOcean Container Registry with short-lived credentials
-      run: doctl registry login --expiry-seconds 600
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-    - name: Build and push image to DigitalOcean Container Registry
-      env:
-        DOCR_REGISTRY: ${{ secrets.DOCR_REGISTRY }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build -t registry.digitalocean.com/$DOCR_REGISTRY/clojure:$IMAGE_TAG .
-        docker push registry.digitalocean.com/$DOCR_REGISTRY/clojure:$IMAGE_TAG
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Push image to DigitalOcean Container Registry
+        env:
+          DOCR_REGISTRY: ${{ secrets.DOCR_REGISTRY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: docker push registry.digitalocean.com/$DOCR_REGISTRY/clojure:$IMAGE_TAG
 
   deploy-dev:
     name:
@@ -49,7 +51,7 @@ jobs:
         env:
           DOCR_REPOSITORY: clojure
           IMAGE_TAG: ${{ github.sha }}
-        run: kustomize edit set image IMAGE:TAG=${{ secrets.DOCR_REGISTRY }}/$DOCR_REPOSITORY:$IMAGE_TAG
+        run: kustomize edit set image IMAGE:TAG=registry.digitalocean.com/nginx-container/$DOCR_REPOSITORY:$IMAGE_TAG
         working-directory: overlays/dev
 
       - name: Commit new image tag to repo
